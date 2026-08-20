@@ -1,0 +1,259 @@
+﻿================================================================================
+PUBLISHING TO GITHUB -- EXACT STEPS TO RUN YOURSELF
+LPBF Process-Property ML
+================================================================================
+Written : 2026-07-30
+Covers  : the parts of SOP.txt Stages 9-10 that need YOUR GitHub account.
+
+--------------------------------------------------------------------------------
+WHERE THINGS ALREADY STAND (done for you, nothing to redo)
+--------------------------------------------------------------------------------
+In D:\Shraddha\Thesis_New the following is ALREADY complete:
+
+  [done] git repository initialised, branch = main
+  [done] .gitignore written (excludes node_modules, __pycache__, catboost_info,
+         .ipynb_checkpoints, outputs_backup_prerun, *.bak, .env, .venv,
+         _nbout.txt)
+  [done] requirements.txt written, 12 pinned packages
+  [done] 47 files staged and reviewed -- no node_modules leak, ~8.5 MB total
+         (46 project files plus this handoff document)
+  [done] all three verification gates pass
+
+  [NOT done] git identity  -- blocks committing (Step 1)
+  [NOT done] the commit    -- everything is staged but uncommitted (Step 2)
+  [NOT done] GitHub repo, push, Pages  (Steps 3-6)
+
+So you are picking up at Step 1. Do NOT re-run `git init` or re-stage.
+
+!! Everything below is run from D:\Shraddha\Thesis_New in PowerShell.
+   Start every session with:      cd D:\Shraddha\Thesis_New
+
+--------------------------------------------------------------------------------
+BEFORE YOU START -- decide two things
+--------------------------------------------------------------------------------
+  A. Your GitHub username.              Referred to below as <USER>.
+  B. The repository name you want.      Referred to below as <REPO>.
+     e.g. lpbf-property-prediction
+
+  The repo must be PUBLIC for GitHub Pages to work on a free account. That means
+  Data.xlsx, the notebook and all results become world-readable, and may be
+  cached or indexed by third parties even if you later delete them. You
+  confirmed public is intended. If that changes, stop before Step 4.
+
+  Replace <USER> and <REPO> everywhere. Do not leave the angle brackets in.
+
+================================================================================
+STEP 1 -- SET YOUR GIT IDENTITY  (required before any commit)
+================================================================================
+Git refuses to commit without a name and email. Pick ONE of these.
+
+  OPTION A (recommended) -- keep your real email private.
+  GitHub can accept a noreply address that still links commits to your account.
+  Find yours at: github.com -> Settings -> Emails -> "Keep my email addresses
+  private". It looks like  12345678+<USER>@users.noreply.github.com
+
+    git config --global user.name "Your Name"
+    git config --global user.email "12345678+<USER>@users.noreply.github.com"
+
+  OPTION B -- use your real email (it will be visible in public commit history):
+
+    git config --global user.name "Your Name"
+    git config --global user.email "you@example.com"
+
+  OPTION C -- this repository only, leaving your global config untouched.
+  Run these from inside D:\Shraddha\Thesis_New, note there is no --global:
+
+    git config user.name "Your Name"
+    git config user.email "you@example.com"
+
+CHECK:
+    git config user.name
+    git config user.email
+  -> both print what you set, neither is blank
+
+!! Whatever email you use here must be one GitHub knows about, or your commits
+   will show up as an unlinked author rather than as you.
+
+================================================================================
+STEP 2 -- MAKE THE FIRST COMMIT
+================================================================================
+Everything is already staged. Review it once, then commit.
+
+    git status
+
+  -> "On branch main", "No commits yet", 47 files under "Changes to be
+     committed", and node_modules must NOT appear anywhere.
+
+    git commit -m "LPBF process-property ML: analysis notebook and browser app"
+
+CHECK:
+    git log --oneline
+  -> exactly one commit
+    git ls-files | Measure-Object -Line
+  -> 47
+
+!! If git still complains about identity, Step 1 did not take effect. Re-run the
+   CHECK in Step 1 from inside D:\Shraddha\Thesis_New.
+
+!! You will see many warnings like "LF will be replaced by CRLF". These are
+   harmless Windows line-ending notices, not errors. Ignore them.
+
+================================================================================
+STEP 3 -- CREATE THE REPOSITORY ON GITHUB (web UI, no extra tools needed)
+================================================================================
+The `gh` CLI is NOT installed on this machine, so use the website.
+
+  3.1  Go to  https://github.com/new
+  3.2  Repository name : <REPO>
+  3.3  Visibility      : Public
+  3.4  IMPORTANT -- leave ALL of these UNCHECKED:
+         [ ] Add a README file
+         [ ] Add .gitignore
+         [ ] Choose a license
+       You already have a README and .gitignore locally. Letting GitHub create
+       them makes the remote diverge from your local history, and your first
+       push is then rejected as non-fast-forward.
+  3.5  Click "Create repository".
+  3.6  On the next screen GitHub shows setup commands. Ignore them; use Step 4.
+
+================================================================================
+STEP 4 -- CONNECT AND PUSH
+================================================================================
+    git remote add origin https://github.com/<USER>/<REPO>.git
+    git push -u origin main
+
+  Authentication, first time only. A browser window or a credential dialog will
+  open. Sign in to GitHub and approve.
+
+!! If you are asked for a PASSWORD in the terminal, do NOT type your GitHub
+   account password -- GitHub removed password authentication for git in 2021.
+   Use a Personal Access Token as the password instead:
+       github.com -> Settings -> Developer settings ->
+       Personal access tokens -> Tokens (classic) -> Generate new token
+       Scope needed: "repo".  Copy the token and paste it as the password.
+   Windows will normally remember it via the built-in credential manager.
+
+CHECK:
+    git remote -v
+  -> origin  https://github.com/<USER>/<REPO>.git  (fetch and push)
+    git status
+  -> "Your branch is up to date with 'origin/main'"
+
+  Then open https://github.com/<USER>/<REPO> in a browser. You should see your
+  files, including the docs/ folder. Confirm docs/model.json is listed at
+  roughly 4.8 MB.
+
+!! GitHub may warn that model.json is large. 4.8 MB is fine -- the hard limit is
+   100 MB and the advisory warning starts at 50 MB.
+!! Do NOT move model.json into Git LFS. GitHub Pages does not resolve LFS
+   pointers, so the deployed site would fetch a text stub and the app would
+   fail to load with no obvious cause.
+
+================================================================================
+STEP 5 -- TURN ON GITHUB PAGES
+================================================================================
+  5.1  Your repo on github.com -> Settings (top bar) -> Pages (left sidebar)
+  5.2  Under "Build and deployment":
+         Source = Deploy from a branch
+         Branch = main        Folder = /docs        <-- NOT / (root)
+  5.3  Click Save.
+  5.4  Wait 1-3 minutes. Watch progress in the Actions tab. When it finishes,
+       the Pages settings screen shows a green banner with your live URL:
+
+         https://<USER>.github.io/<REPO>/
+
+!! Choosing Folder = / instead of /docs is the single most common mistake here.
+   The symptom is a page that loads but shows the error panel, because
+   model.json 404s.
+
+================================================================================
+STEP 6 -- VERIFY THE LIVE SITE  (do not skip)
+================================================================================
+Open  https://<USER>.github.io/<REPO>/  and confirm all four:
+
+  [ ] All seven property cards show real numbers, not grey skeleton
+      placeholders.
+  [ ] Press F12 -> Network tab -> reload. model.json returns status 200 and
+      about 4.8 MB.
+  [ ] F12 -> Console tab. You see the self-check PASS line and no red errors.
+  [ ] Click "Sample Data" and confirm predictions appear alongside the source
+      study's measured values.
+
+  Cross-check one prediction against your local copy. Serve locally with:
+      cd docs
+      python -m http.server 8000
+      # open http://localhost:8000, then Ctrl+C when done
+  The same inputs must give the same numbers locally and live.
+
+!! Pages caches aggressively. After any redeploy, hard-reload with Ctrl+F5
+   before concluding a change did not ship.
+
+================================================================================
+STEP 7 -- POINT THE README AT THE LIVE SITE
+================================================================================
+README.md line 14 currently reads:
+
+    **[> Live demo](https://YOUR-USERNAME.github.io/YOUR-REPO/)** -- replace with your GitHub Pages URL
+
+Edit that line to your real URL, then:
+
+    git add README.md
+    git commit -m "Point demo link at the deployed site"
+    git push
+
+================================================================================
+ROUTINE UPDATES AFTER THIS
+================================================================================
+Once set up, publishing a change is three commands. Run the gates FIRST:
+
+    python _check_docs.py
+    node verify_js.mjs
+    python _check_nb.py
+
+  All three must print OK/PASS and exit 0. Then:
+
+    git add -A
+    git commit -m "describe what changed"
+    git push
+
+  Pages redeploys automatically within a couple of minutes.
+
+!! Never push on a failing gate. A verify_js.mjs failure specifically means
+   browser visitors would see different predictions than your thesis reports --
+   and nothing about the page would look broken, so no one would notice.
+
+================================================================================
+IF SOMETHING GOES WRONG
+================================================================================
+"fatal: ambiguous argument 'HEAD'"
+    You have no commits yet. Do Step 2.
+
+"Updates were rejected because the remote contains work you do not have"
+    You let GitHub create a README/.gitignore/license in Step 3. Easiest fix is
+    to delete the GitHub repo and redo Step 3 with all boxes unchecked. Do NOT
+    use `git push --force` unless you are certain the remote holds nothing you
+    want.
+
+"Support for password authentication was removed"
+    Use a Personal Access Token as the password. See the note in Step 4.
+
+Live site shows the error panel instead of predictions
+    Almost always Folder = / instead of /docs in Step 5.2. Also check the
+    Network tab for a 404 on model.json.
+
+Live site 404s entirely
+    Pages has not finished its first deployment, or the repo is private. Check
+    the Actions tab, and confirm visibility is Public.
+
+Everything works locally but not deployed
+    Hard-reload (Ctrl+F5). If it persists, confirm the commit that fixed it was
+    actually pushed:  git log origin/main --oneline -1
+
+================================================================================
+REFERENCE
+================================================================================
+  SOP.txt   full procedure from a clean machine: environment, data, notebook,
+            training, both gates, local run, and the maintenance recipes for
+            deciding when a 45-minute retrain is actually needed
+  README.md project overview, headline results, reliability tiers
+================================================================================

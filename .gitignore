@@ -1,0 +1,10 @@
+﻿node_modules/
+__pycache__/
+*.pyc
+catboost_info/
+.ipynb_checkpoints/
+outputs_backup_prerun/
+*.bak
+.env
+.venv/
+_nbout.txt

@@ -1,0 +1,5 @@
+target,model,TunedCV_R2,Tuned_train_R2
+Hardness (HV),RandomForest,0.544 ± 0.238,0.739
+Hardness (HV),XGBoost,0.501 ± 0.342,0.831
+Ultimate Tensile Strength (MPa),RandomForest,0.619 ± 0.115,0.749
+Ultimate Tensile Strength (MPa),XGBoost,0.710 ± 0.099,0.936

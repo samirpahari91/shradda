@@ -1,0 +1,8 @@
+target,task,nested_grouped_CV,std,most_selected,selection_rate
+Hardness (HV),reg,0.4782,0.2276,RandomForest/deep,0.4
+Yield Stress (MPa),reg,0.4264,0.3248,ExtraTrees,0.52
+Ultimate Tensile Strength (MPa),reg,0.6162,0.1898,ExtraTrees,0.52
+Relative Density %,reg,0.6614,0.134,XGBoost/mid,0.6
+Microstructure Average Grain Size(µm),reg,0.3517,1.7093,ExtraTrees,0.6
+Grain Shape,clf,0.6563,0.0823,ExtraTrees,0.76
+Microstructure_ Plane,clf,0.8055,0.0409,RandomForest/d8,0.4

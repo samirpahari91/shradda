@@ -1,0 +1,368 @@
+[
+ {
+  "target": "Hardness (HV)",
+  "row": {
+   "Laser power (W)": 175.0,
+   "Laser speed (mm/s)": 800.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 120.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": 1.2,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 3.0,
+   "Density measurement method": "Imagej"
+  },
+  "expected": 218.77041666666668
+ },
+ {
+  "target": "Hardness (HV)",
+  "row": {
+   "Laser power (W)": 185.0,
+   "Laser speed (mm/s)": 800.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 120.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": 1.2,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 3.0,
+   "Density measurement method": "Imagej"
+  },
+  "expected": 222.91150000000002
+ },
+ {
+  "target": "Hardness (HV)",
+  "row": {
+   "Laser power (W)": 190.0,
+   "Laser speed (mm/s)": 800.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 120.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": 1.2,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 3.0,
+   "Density measurement method": "Imagej"
+  },
+  "expected": 226.5643333333333
+ },
+ {
+  "target": "Yield Stress (MPa)",
+  "row": {
+   "Laser power (W)": 200.0,
+   "Laser speed (mm/s)": 1000.0,
+   "Layer thickness (um)": 50.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 75.0,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": 1.0666666666666667,
+   "layer_over_beam": 0.6666666666666666,
+   "aspect_h_t": 1.6,
+   "Density measurement method": "Optical"
+  },
+  "expected": 431.5
+ },
+ {
+  "target": "Yield Stress (MPa)",
+  "row": {
+   "Laser power (W)": 200.0,
+   "Laser speed (mm/s)": 1000.0,
+   "Layer thickness (um)": 50.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 75.0,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": 1.0666666666666667,
+   "layer_over_beam": 0.6666666666666666,
+   "aspect_h_t": 1.6,
+   "Density measurement method": "Optical"
+  },
+  "expected": 431.5
+ },
+ {
+  "target": "Yield Stress (MPa)",
+  "row": {
+   "Laser power (W)": 175.0,
+   "Laser speed (mm/s)": 800.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 120.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": 1.2,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 3.0,
+   "Density measurement method": "Imagej"
+  },
+  "expected": 567.0
+ },
+ {
+  "target": "Ultimate Tensile Strength (MPa)",
+  "row": {
+   "Laser power (W)": 200.0,
+   "Laser speed (mm/s)": 1000.0,
+   "Layer thickness (um)": 50.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 75.0,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": 1.0666666666666667,
+   "layer_over_beam": 0.6666666666666666,
+   "aspect_h_t": 1.6,
+   "Density measurement method": "Optical"
+  },
+  "expected": 527.5
+ },
+ {
+  "target": "Ultimate Tensile Strength (MPa)",
+  "row": {
+   "Laser power (W)": 200.0,
+   "Laser speed (mm/s)": 1000.0,
+   "Layer thickness (um)": 50.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 75.0,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": 1.0666666666666667,
+   "layer_over_beam": 0.6666666666666666,
+   "aspect_h_t": 1.6,
+   "Density measurement method": "Optical"
+  },
+  "expected": 527.5
+ },
+ {
+  "target": "Ultimate Tensile Strength (MPa)",
+  "row": {
+   "Laser power (W)": 175.0,
+   "Laser speed (mm/s)": 800.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 120.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": 1.2,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 3.0,
+   "Density measurement method": "Imagej"
+  },
+  "expected": 685.0
+ },
+ {
+  "target": "Relative Density %",
+  "row": {
+   "Laser power (W)": 190.0,
+   "Laser speed (mm/s)": 1000.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 50.0,
+   "Beam size (um)": null,
+   "layer rotation (degree)": 0.0,
+   "hatch_over_beam": null,
+   "layer_over_beam": null,
+   "aspect_h_t": 1.25,
+   "Density measurement method": "Archimedes"
+  },
+  "expected": 96.10608673095703
+ },
+ {
+  "target": "Relative Density %",
+  "row": {
+   "Laser power (W)": 190.0,
+   "Laser speed (mm/s)": 1350.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 100.0,
+   "Beam size (um)": null,
+   "layer rotation (degree)": 67.0,
+   "hatch_over_beam": null,
+   "layer_over_beam": null,
+   "aspect_h_t": 2.5,
+   "Density measurement method": "Archimedes"
+  },
+  "expected": 95.7933349609375
+ },
+ {
+  "target": "Relative Density %",
+  "row": {
+   "Laser power (W)": 190.0,
+   "Laser speed (mm/s)": 1700.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 150.0,
+   "Beam size (um)": null,
+   "layer rotation (degree)": 90.0,
+   "hatch_over_beam": null,
+   "layer_over_beam": null,
+   "aspect_h_t": 3.75,
+   "Density measurement method": "Archimedes"
+  },
+  "expected": 78.26348114013672
+ },
+ {
+  "target": "Microstructure Average Grain Size(\u00b5m)",
+  "row": {
+   "Laser power (W)": 220.0,
+   "Laser speed (mm/s)": 960.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 0.0,
+   "hatch_over_beam": 0.8,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 2.0,
+   "Density measurement method": null
+  },
+  "expected": 43.0
+ },
+ {
+  "target": "Microstructure Average Grain Size(\u00b5m)",
+  "row": {
+   "Laser power (W)": 220.0,
+   "Laser speed (mm/s)": 960.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 15.0,
+   "hatch_over_beam": 0.8,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 2.0,
+   "Density measurement method": null
+  },
+  "expected": 43.0
+ },
+ {
+  "target": "Microstructure Average Grain Size(\u00b5m)",
+  "row": {
+   "Laser power (W)": 220.0,
+   "Laser speed (mm/s)": 960.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 30.0,
+   "hatch_over_beam": 0.8,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 2.0,
+   "Density measurement method": null
+  },
+  "expected": 43.0
+ },
+ {
+  "target": "Grain Shape",
+  "row": {
+   "Laser power (W)": 220.0,
+   "Laser speed (mm/s)": 960.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 0.0,
+   "hatch_over_beam": 0.8,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 2.0,
+   "Density measurement method": null
+  },
+  "expected": [
+   0.0,
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ {
+  "target": "Grain Shape",
+  "row": {
+   "Laser power (W)": 220.0,
+   "Laser speed (mm/s)": 960.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 15.0,
+   "hatch_over_beam": 0.8,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 2.0,
+   "Density measurement method": null
+  },
+  "expected": [
+   0.0,
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ {
+  "target": "Grain Shape",
+  "row": {
+   "Laser power (W)": 220.0,
+   "Laser speed (mm/s)": 960.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 30.0,
+   "hatch_over_beam": 0.8,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 2.0,
+   "Density measurement method": null
+  },
+  "expected": [
+   0.0,
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ {
+  "target": "Microstructure_ Plane",
+  "row": {
+   "Laser power (W)": 220.0,
+   "Laser speed (mm/s)": 960.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 0.0,
+   "hatch_over_beam": 0.8,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 2.0,
+   "Density measurement method": null
+  },
+  "expected": [
+   0.029281843015,
+   0.9707181569833333
+  ]
+ },
+ {
+  "target": "Microstructure_ Plane",
+  "row": {
+   "Laser power (W)": 220.0,
+   "Laser speed (mm/s)": 960.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 15.0,
+   "hatch_over_beam": 0.8,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 2.0,
+   "Density measurement method": null
+  },
+  "expected": [
+   0.029281843015,
+   0.9707181569833333
+  ]
+ },
+ {
+  "target": "Microstructure_ Plane",
+  "row": {
+   "Laser power (W)": 220.0,
+   "Laser speed (mm/s)": 960.0,
+   "Layer thickness (um)": 40.0,
+   "Hatch spacing (um)": 80.0,
+   "Beam size (um)": 100.0,
+   "layer rotation (degree)": 30.0,
+   "hatch_over_beam": 0.8,
+   "layer_over_beam": 0.4,
+   "aspect_h_t": 2.0,
+   "Density measurement method": null
+  },
+  "expected": [
+   0.030132183148333335,
+   0.96986781685
+  ]
+ }
+]

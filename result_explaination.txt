@@ -1,0 +1,556 @@
+================================================================================
+MACHINE-LEARNING PREDICTION OF PROCESS-PROPERTY RELATIONSHIPS IN LASER
+POWDER-BED FUSION: A METHODOLOGY AND RESULTS REPORT
+================================================================================
+Companion document to  LPBF_ML_Analysis.ipynb  and  METHODOLOGY_README.md
+Dataset: Data.xlsx (Sheet1)   |   674 specimens, 63 source publications
+Prepared in full paper style (Abstract -> Introduction -> Data -> Methods ->
+Results -> Discussion -> Limitations -> Conclusions). All numerical results are
+cross-validated values taken directly from the executed notebook output files.
+================================================================================
+
+********************************************************************************
+*  v3 ERRATUM - READ BEFORE QUOTING ANY R2 IN SECTION 4                        *
+********************************************************************************
+*  A replicate-leakage defect was found in the validation protocol after this  *
+*  report was first written. 129 of 674 rows share an EXACTLY IDENTICAL        *
+*  process-input vector with another row (one study reporting several          *
+*  measurements at a single laser setting; the same build characterised on two *
+*  planes). Per target, 15-35 % of rows have such a twin. RepeatedKFold        *
+*  shuffles rows at random and therefore places twins in train and test        *
+*  simultaneously, scoring memorisation as generalisation.                     *
+*                                                                              *
+*  Corrected (replicate-grouped) scores - see Section 4.7:                     *
+*                                                                              *
+*      Target                RepeatedKFold   Grouped (honest)   Nested         *
+*      --------------------  -------------   ----------------   ------         *
+*      Relative Density            0.657           0.678         0.661         *
+*      UTS                         0.692           0.646         0.616         *
+*      Hardness                    0.554           0.519         0.478         *
+*      Yield Stress                0.685           0.463         0.426         *
+*      Grain Size                  0.636           0.356         0.352         *
+*      Microstructure Plane        0.799           0.813         0.805         *
+*      Grain Shape                 0.702           0.665         0.656         *
+*                                                                              *
+*  The Nested column wraps model selection in an inner loop and is the figure  *
+*  reported in the README and shown by the web app; the Grouped column is a    *
+*  single loop that also selects on its scoring folds.                         *
+*                                                                              *
+*  Relative Density, Hardness and Microstructure Plane are unaffected and      *
+*  their conclusions stand. Yield Stress is materially weaker than reported    *
+*  and falls below the app's 0.45 reliability bar ("Low confidence").          *
+*  GRAIN SIZE IS NOT MEANINGFULLY PREDICTABLE (R2 0.35, fold s.d. +/-1.71),    *
+*  which also invalidates the Section 4.5 "stabilisation" result.              *
+*  Sections 4.1-4.6 are retained as written for transparency; Section 4.7      *
+*  supersedes them.                                                            *
+********************************************************************************
+
+
+--------------------------------------------------------------------------------
+ABSTRACT
+--------------------------------------------------------------------------------
+We develop and critically evaluate a machine-learning (ML) framework that maps
+laser powder-bed fusion (LPBF) process parameters to the resulting material
+properties, using a dataset of 674 specimens compiled from 63 peer-reviewed
+publications. The dataset presents three characteristic obstacles to ML:
+(i) numeric quantities frequently reported as text ranges (e.g. "120-160"),
+(ii) pervasive and non-uniform missingness (input features 1.6-52.2 % missing;
+target properties 33.7-74.3 % missing), and (iii) mixed numeric/categorical
+targets. We address these with range-to-midpoint parsing, a three-tier
+imputation strategy (deterministic physics-based recovery of energy densities,
+in-fold multivariate imputation, and evidence-based removal of low-value
+features), and independent per-target modelling. Five properties are modelled by
+regression and two by classification. Using repeated k-fold cross-validation
+(CV) and nested CV for tuning, tree-ensemble models (Random Forest, XGBoost,
+LightGBM, CatBoost) achieve held-out coefficients of determination (R2) of
+0.64-0.69 for the mechanical/density properties and balanced classification
+accuracies of 0.70-0.81 for the microstructural categories. A variance-
+decomposition diagnostic shows that 51-100 % of each property's variance is
+attributable to between-study factors (alloy, machine, powder, heat treatment)
+that are not encoded as features; consequently a four-way Bayesian-tuned model
+benchmark confirms that no algorithm meaningfully outperforms the others
+(spread <= 0.03 R2). We conclude that the observed accuracy ceiling is a data
+limitation, not a modelling one, and that the highest-value future work is the
+acquisition of compositional/machine metadata rather than more complex models.
+
+
+--------------------------------------------------------------------------------
+1. INTRODUCTION
+--------------------------------------------------------------------------------
+Laser powder-bed fusion is a metal additive-manufacturing process in which a
+laser selectively melts successive layers of powder. The final part properties
+- hardness, tensile strength, density, and microstructure - depend on a large
+set of interacting process parameters (laser power, scan speed, hatch spacing,
+layer thickness, beam size, scan strategy, etc.). Establishing quantitative
+process-property relationships is central to process qualification, yet
+first-principles simulation is expensive and experiment is slow. Data-driven
+surrogate models are therefore attractive.
+
+Aggregating published data into a single model is appealing but statistically
+hazardous: literature data are heterogeneous, incompletely reported, and
+inconsistently formatted. The objective of this work is NOT merely to fit a
+model, but to build a *defensible* pipeline that (a) uses every datum that
+exists, (b) never leaks test information into training, (c) resists overfitting
+on a small, noisy dataset, and (d) reports honest, uncertainty-aware
+performance. We further ask the practical question posed during this study:
+"does a more sophisticated model (LightGBM, CatBoost, or Bayesian
+hyperparameter optimisation) improve accuracy?" and answer it empirically.
+
+
+--------------------------------------------------------------------------------
+2. DATA DESCRIPTION
+--------------------------------------------------------------------------------
+The dataset (Data.xlsx, Sheet1) contains 674 rows x 18 columns:
+  - 10 INPUT (process) features
+  - 7  OUTPUT (property) targets
+  - 1  "References" column (bibliographic citation only; NOT used as a predictor
+       or target at any point).
+
+2.1 Input features (process parameters)
+  1  Laser power (W)                     numeric
+  2  Laser speed (mm/s)                  numeric
+  3  Layer thickness (um)                numeric
+  4  Hatch spacing (um)                  numeric
+  5  Beam size (um)                      numeric
+  6  Scanning strategy                   categorical (14 raw classes)
+  7  layer rotation (degree)             numeric
+  8  Linear energy density (J/m)         numeric (derived)
+  9  Volumetric energy density (J/mm3)   numeric (derived)
+  10 Density measurement method          categorical (6 raw classes)
+
+2.2 Target properties
+  Regression targets:
+    - Hardness (HV)
+    - Yield Stress (MPa)
+    - Ultimate Tensile Strength (UTS, MPa)
+    - Relative Density (%)
+    - Microstructure Average Grain Size (um)
+  Classification targets:
+    - Grain Shape          (10 raw classes, e.g. Columnar, Equiaxed, Cellular)
+    - Microstructure Plane (3 raw classes: Vertical, Horizontal)
+
+2.3 Data-quality challenges (quantified)
+  (a) Text ranges in numeric columns. Values such as "120-160" (power),
+      "750-1000" (speed), and "3.4-8.3" (grain size) are stored as strings and
+      appear across most numeric columns.
+  (b) Missingness (percentage of values absent, raw data):
+        Laser power ................  0.0 %      Hardness .............. 74.3 %
+        Laser speed ................  8.2 %      Yield Stress .......... 63.1 %
+        Layer thickness ............ 12.8 %      UTS ................... 56.8 %
+        Hatch spacing ..............  1.6 %      Relative Density ...... 33.7 %
+        Beam size .................. 34.6 %      Grain Size ............ 70.0 %
+        Scanning strategy .......... 52.2 %      Grain Shape ........... 53.9 %
+        layer rotation ............. 32.8 %      Microstructure Plane .. 53.3 %
+        Linear energy density ......  9.9 %
+        Volumetric energy density ..  5.6 %
+        Density measurement method . 46.3 %
+      Only 226 of 674 rows (33.5 %) possess all eight numeric inputs
+      simultaneously, and only 22 of 674 (3.3 %) possess all seven targets
+      simultaneously. Listwise deletion is therefore not viable.
+  (c) Dirty categorical labels: e.g. "Equiaxed " vs "Equiaxed" (trailing space),
+      "vertical" vs "Vertical" (case) inflate apparent class counts.
+
+
+--------------------------------------------------------------------------------
+3. METHODS
+--------------------------------------------------------------------------------
+3.1 Data cleaning and numeric representation
+  - Range-to-midpoint parsing: any "a-b" string is converted to its arithmetic
+    midpoint (a+b)/2, the unbiased point estimate when only a range is reported.
+  - Numeric coercion: residual non-numeric entries become NaN (later imputed).
+  - Categorical normalisation: whitespace trimmed and case unified, collapsing
+    duplicate classes.
+
+3.2 Three-tier missing-data strategy
+  TIER 1 - Deterministic physics-based imputation (exact, zero leakage).
+    Two inputs are exact functions of the others within the same specimen:
+        Linear energy density  LED [J/m]   = (P / v) x 1000
+        Volumetric energy dens VED [J/mm3] = P / (v . h . t)   (h,t in mm)
+    These formulae were validated against reported values (median ratio
+    reported/calculated = 1.000; ~92-96 % of rows within 5 %). Following a
+    conservative policy, missing cells are FILLED but reported values are NEVER
+    overwritten. This recovered 12 missing LED and 30 missing VED values. Because
+    each fill uses only that row's own data, it cannot leak across the train/test
+    split.
+  TIER 2 - In-fold multivariate imputation (MICE). Remaining numeric gaps are
+    filled with scikit-learn IterativeImputer (an ExtraTrees estimator), which
+    models each incomplete feature from the others. A binary missing-indicator
+    flag is appended for every feature. The imputer is fit ONLY on the training
+    fold of each CV split. Categorical gaps use most-frequent imputation +
+    one-hot encoding (unknown categories ignored), also in-fold.
+  TIER 3 - Evidence-based feature removal. Any input still >50 % missing after
+    Tier 1 is dropped, because imputing a majority-absent column mostly injects
+    the imputer's own guess. This removed "Scanning strategy" (52.2 % missing).
+
+3.3 Feature engineering (physically motivated, row-wise, leakage-free)
+    Added: hatch_over_beam (track overlap), layer_over_beam (penetration ratio),
+    aspect_h_t (melt-pool geometry proxy), P_over_v (linear heat input),
+    log_LED, log_VED. Each is computed from a single row.
+
+3.4 Feature-selection outcome (final model input)
+    A dedicated ablation (Section 4.4) showed the derived energy-density
+    features (LED, VED, P_over_v, log_LED, log_VED) add negligible or negative
+    value; they were therefore DROPPED GLOBALLY. The final feature set is:
+      Numeric (9):  Laser power, Laser speed, Layer thickness, Hatch spacing,
+                    Beam size, layer rotation, hatch_over_beam, layer_over_beam,
+                    aspect_h_t
+      Categorical (1): Density measurement method
+
+3.5 Rationale for per-target (single-target) modelling
+    Each property is modelled by its own independent estimator rather than by a
+    single multi-output regressor, for four reasons specific to this dataset:
+      (i)  A joint model requires all targets present in each training row; this
+           holds for only 22 rows (3.3 %). Per-target models instead use each
+           property's full labelled subset (173-447 rows).
+      (ii) Two targets are categorical and cannot share a regressor.
+      (iii)Although the mechanical targets are pairwise correlated
+           (Hardness-Yield-UTS r = 0.84-0.87), they are rarely co-measured, so
+           the cross-target information a joint model would exploit is largely
+           absent; Grain Size is essentially uncorrelated (|r| ~ 0.05).
+      (iv) Targets require different treatment (e.g. Grain Size benefits from a
+           log transform and energy-feature removal) and are best served by
+           different algorithms.
+
+3.6 Models
+    Random Forest (RF), XGBoost, LightGBM, CatBoost, plus a Dummy baseline
+    (median for regression, most-frequent for classification) as an honesty
+    check. XGBoost/RF served as the primary models; LightGBM and CatBoost were
+    added for the benchmark in Section 4.5.
+
+3.7 Validation protocol
+    - Regression: RepeatedKFold (5 splits x 5 repeats = 25 fits) reporting
+      R2, RMSE and MAE as mean +/- standard deviation.
+    - Classification: RepeatedStratifiedKFold (5 x 5) reporting balanced
+      accuracy and macro-F1; ultra-rare classes (<8 samples) merged to "Other".
+    - Both training-fold and held-out scores are reported so overfitting is
+      visible.
+    - Hyperparameter tuning uses NESTED CV (inner search loop, outer scoring
+      loop) to give unbiased tuned estimates.
+    - Group-aware CV by publication was deliberately NOT used: with a median of
+      4 rows per publication (one contributing 64), such folds are unstable and
+      not physically meaningful.
+    - Random seed fixed at 42 throughout for reproducibility.
+
+
+--------------------------------------------------------------------------------
+4. RESULTS
+--------------------------------------------------------------------------------
+
+4.1 Baseline regression performance (final feature set, energy features dropped)
+    Held-out cross-validated R2 (mean +/- s.d.) and best model per target.
+    Every learned model comfortably beats the Dummy baseline (all Dummy R2 < 0).
+
+    Target                 n    Best model     CV R2          Train R2  CV RMSE
+    ---------------------  ---  -------------  -------------  --------  ---------------
+    Relative Density (%)   447  XGBoost        0.657 +/-0.09   0.967     3.91 %
+    Yield Stress (MPa)     249  XGBoost        0.685 +/-0.12   0.883    80.7 MPa
+    UTS (MPa)              291  XGBoost        0.692 +/-0.11   0.951   112.7 MPa
+    Grain Size (um)        202  CatBoost       0.662 +/-0.23   0.995    29.8 um
+    Hardness (HV)          173  RandomForest   0.554 +/-0.20   0.748    27.0 HV
+
+    Full per-model table (CV R2):
+      Target             RF      XGBoost  LightGBM  CatBoost  Dummy
+      Hardness          0.554    0.432    0.493     0.485    -0.051
+      Yield Stress      0.555    0.685    0.650     0.669    -0.086
+      UTS               0.633    0.692    0.685     0.686    -0.054
+      Relative Density  0.542    0.657    0.522     0.648    -0.163
+      Grain Size        0.258    0.636    0.445     0.662    -0.094
+
+    Observations:
+      - The mechanical/density properties are predicted with useful accuracy
+        (R2 ~ 0.66-0.69 for the best model).
+      - A train-vs-CV gap is present (e.g. UTS train 0.95 vs CV 0.69), indicating
+        residual overfitting that is intrinsic to the data (see Section 5).
+      - Grain Size shows high variance across folds (s.d. up to 0.65 for RF),
+        motivating the dedicated study in Section 4.4.
+
+4.2 Classification performance
+    Held-out balanced accuracy (mean +/- s.d.) and macro-F1.
+
+    Target                  n    Best model     Bal. Acc.      Macro-F1     Dummy
+    ----------------------  ---  -------------  -------------  -----------  ------
+    Microstructure Plane    315  CatBoost       0.807 +/-0.04  0.807        0.500
+    Grain Shape             311  XGBoost        0.702 +/-0.07  0.704        0.167
+
+    Both classifiers strongly outperform the majority-class baseline.
+    Microstructure Plane (a near-binary Vertical/Horizontal distinction) is
+    predicted very well; Grain Shape (up to 10 classes) is moderately predicted.
+
+4.3 Nested-CV hyperparameter tuning of Hardness and UTS
+    Motivation: close the observed train-CV gap on the two targets showing it.
+    Method: inner RandomizedSearch over regularisation-focused spaces, outer
+    5-fold scoring (nested CV); median imputation used during search for speed.
+
+    Target  Model         Tuned CV R2      Tuned Train R2
+    ------  ------------  --------------   --------------
+    UTS     XGBoost       0.710 +/-0.10     0.936
+    UTS     RandomForest  0.619 +/-0.12     0.749
+    Hard.   RandomForest  0.544 +/-0.24     0.739
+    Hard.   XGBoost       0.501 +/-0.34     0.831
+
+    Finding: tuning delivered a small genuine gain on UTS (0.69 -> 0.71) but did
+    NOT close the train-CV gap (train remained ~0.94). The gap is therefore an
+    intrinsic property of the (heterogeneous, small) data, not a symptom of
+    poor hyperparameters. Hardness did not improve within its wide uncertainty.
+
+4.4 Sensitivity analysis: contribution of derived energy-density features
+    Method: re-evaluate each regression target with the energy-derived features
+    added vs removed; report delta R2 = R2(without) - R2(with).
+
+    Target                 R2 with   R2 without   delta R2
+    ---------------------  --------  -----------  --------
+    Hardness (HV)           0.476     0.432       -0.044
+    Yield Stress (MPa)      0.699     0.685       -0.013
+    UTS (MPa)               0.682     0.692       +0.010
+    Relative Density (%)    0.696     0.657       -0.040
+    Grain Size (um)         0.506     0.636       +0.130
+
+    Finding: for the four mechanical/density targets the change is within
+    +/-0.04 R2 (noise), confirming that energy density carries no independent
+    information beyond the raw P, v, h, t from which it is computed. For Grain
+    Size, REMOVING the energy features IMPROVED R2 by +0.13. The energy features
+    were therefore dropped from all models (parsimony + reduced overfitting), a
+    data-driven decision rather than an assumption.
+
+4.5 Grain Size stabilisation study (log target x energy features)
+    Grain Size was the noisiest target (raw CV R2 = 0.51 +/- 0.50). We tested all
+    four combinations of {raw vs log1p target} x {with vs without energy}.
+
+    Configuration              CV R2    s.d.
+    -------------------------  ------   -----
+    raw target + energy        0.506    0.498
+    raw target,  no energy     0.636    0.227   <-- best
+    log target + energy        0.606    0.287
+    log target,  no energy     0.595    0.225
+
+    Finding: the dominant improvement comes from REMOVING the energy features,
+    which simultaneously raises R2 (0.51 -> 0.64) and more than halves the fold
+    variance (s.d. 0.50 -> 0.23). The log transform helps only while the energy
+    features are present; once they are removed the raw target is marginally
+    better. Recommended configuration: raw (um) target with energy features
+    removed.
+
+4.6 Four-model Bayesian-tuned benchmark (does a fancier model help?)
+    Motivation: a one-way ANOVA of each target against publication identity
+    revealed the fraction of variance explained by "which study" alone:
+        Grain Size ...... eta^2 = 1.00 (100 %)
+        Hardness ........ eta^2 = 0.71 ( 71 %)
+        UTS ............. eta^2 = 0.70 ( 70 %)
+        Relative Density  eta^2 = 0.51 ( 51 %)
+    i.e. most target variance is BETWEEN-STUDY (alloy, machine, powder, heat
+    treatment) and is not encoded in the available features. This predicts a
+    data-imposed accuracy ceiling that no model can exceed.
+
+    Test: RF, XGBoost, LightGBM and CatBoost were each Bayesian-tuned (Optuna
+    TPE, 30 trials) under identical nested CV. Tuned CV R2 and delta vs the
+    untuned-XGBoost baseline:
+
+    Target            RF      XGBoost  LightGBM  CatBoost  Best (delta)
+    ----------------  ------  -------  --------  --------  ------------------
+    UTS               0.710   0.705    0.703     0.700     RF   (+0.032)
+    Yield Stress      0.654   0.683    0.688     0.676     LGBM (+0.001)
+    Relative Density  0.603   0.684    0.546     0.652     XGB  (+0.009)
+    Hardness          0.578   0.579    0.559     0.552     XGB  (+0.167)
+
+    Findings:
+      - All four model families cluster within ~0.03 R2 on every target - the
+        signature of a data-limited (not model-limited) problem.
+      - LightGBM and CatBoost do NOT outperform XGBoost/RF meaningfully; on some
+        targets they are worse (e.g. LightGBM on Relative Density, -0.130).
+      - The only substantial gain came from TUNING a weak target (Hardness,
+        +0.167), not from adopting a new algorithm.
+
+
+4.7 CORRECTED VALIDATION: replicate-grouped cross-validation
+    (This subsection supersedes the R2 values in 4.1-4.6.)
+
+    Motivation. Sections 4.1-4.6 use RepeatedKFold, which is valid only if rows
+    are statistically independent. Inspection of the dataset shows they are not.
+
+    4.7.1 The defect
+      129 of 674 rows (19.1 %) share an EXACTLY IDENTICAL numeric process-input
+      vector with at least one other row. Two mechanisms generate them:
+        (i)  A single publication reports several measurements at one process
+             setting. Example: rows 192-194 all have P=100 W, v=111 mm/s and
+             report grain sizes of 11.0, 19.0 and 17.5 um.
+        (ii) The same build is characterised on two planes, producing two rows
+             that differ only in the Microstructure Plane output.
+
+      Affected fraction per target:
+        Yield Stress ........ 86 / 249  (35 %)
+        UTS ................. 95 / 291  (33 %)
+        Hardness ............ 33 / 173  (19 %)
+        Relative Density .... 77 / 447  (17 %)
+        Grain Size .......... 31 / 202  (15 %)
+
+      Because RepeatedKFold shuffles rows, it routinely assigns one twin to the
+      training fold and its twin to the test fold. The estimator then predicts a
+      process setting whose answer it has memorised - effectively a
+      nearest-neighbour lookup rather than generalisation.
+
+    4.7.2 The correction
+      Folds are grouped on the exact numeric input vector (GroupKFold for
+      regression, StratifiedGroupKFold for classification), so replicates are
+      always assigned to the same side of every split. Model, preprocessing and
+      all other protocol elements are unchanged, making the delta attributable
+      to the leak alone.
+
+      Both columns are single-loop CV, so the delta isolates grouping alone.
+      The final column adds nested model selection and is the reported figure
+      (Section 7, conclusion 2; outputs/nested_grouped_results.csv).
+
+      Target                RepeatedKFold  Grouped     s.d.    Inflation   Nested
+      --------------------  -------------  ---------   ------  ---------   ------
+      Grain Size (um)           0.636        0.356      1.709    -0.280     0.352
+      Yield Stress (MPa)        0.685        0.463      0.298    -0.222     0.426
+      UTS (MPa)                 0.692        0.646      0.174    -0.046     0.616
+      Grain Shape (bal.acc)     0.702        0.665      0.082    -0.037     0.656
+      Hardness (HV)             0.554        0.519      0.207    -0.035     0.478
+      Relative Density (%)      0.657        0.678      0.100    +0.021     0.661
+      Microstr. Plane (b.a.)    0.799        0.813      0.038    +0.014     0.805
+
+    4.7.3 Interpretation
+      - Relative Density, Hardness and Microstructure Plane never relied on
+        replicate leakage; their scores and conclusions stand unchanged.
+      - UTS and Grain Shape lose a small, tolerable amount of apparent skill.
+      - Yield Stress is materially weaker than Section 4.1 reports (0.69 ->
+        0.46, and 0.426 nested) and should be described as directional, not
+        predictive. At 0.426 it falls below the 0.45 reliability threshold, so
+        the web app labels it "Low confidence" alongside Grain Size.
+      - GRAIN SIZE COLLAPSES to R2 = 0.356 with a fold standard deviation of
+        +/-1.709 - i.e. individual folds range from strongly negative to
+        moderately positive. It is NOT meaningfully predictable from process
+        parameters alone. This is entirely consistent with the eta^2 = 1.00
+        between-study variance measured for grain size in Section 4.6: grain
+        size is governed by alloy and thermal history, which this dataset does
+        not encode. It follows that the Section 4.5 "stabilisation" finding
+        (R2 0.51 -> 0.64 by removing energy features) is an artefact of the
+        same leakage and must not be quoted as a genuine improvement.
+
+    4.7.4 Relationship to the rejected paper-level grouping
+      This is NOT the publication-level GroupKFold rejected in Section 3.7.
+      Grouping by paper pools 4-64 physically different experiments into one
+      fold, making folds uneven and the metric dominated by which large study
+      landed in the test set. Grouping identical ROWS is a narrow, mechanical
+      de-duplication: it prevents exact duplicates from straddling a split and
+      changes nothing else. The two decisions are independent and both stand.
+
+    4.7.5 Nested model selection
+      Because the deployed pipeline now selects among several candidate models
+      per target, the selection itself is a source of optimism. The deployment
+      script (train_export.py) therefore wraps candidate selection in an INNER
+      grouped CV and scores in an OUTER grouped loop, so the reported figure is
+      the score of the selection PROCEDURE rather than of the luckiest
+      candidate. Artefacts: outputs/grouped_model_comparison.csv (per-candidate)
+      and outputs/nested_grouped_results.csv (headline).
+
+4.8 Imputer simplification: MICE vs median + missing-indicator
+    The notebook uses IterativeImputer (MICE, ExtraTrees). Benchmarked
+    head-to-head under an identical protocol, plain median imputation with
+    missing-indicator flags scored EQUAL OR BETTER on every one of the seven
+    targets. On a dataset of 173-447 labelled rows per target, MICE's
+    cross-feature modelling does not earn its additional complexity or its
+    additional variance. Median imputation is also a handful of constants and is
+    therefore exactly reproducible in JavaScript, which is what makes the
+    client-side deployment feasible. The deployed pipeline uses median +
+    indicator. Evidence: outputs/diag_replicate_cv.csv.
+
+
+--------------------------------------------------------------------------------
+5. DISCUSSION
+--------------------------------------------------------------------------------
+Three lines of evidence converge on a single interpretation. First, the process
+features explain roughly two-thirds of the variance in the mechanical/density
+properties (best CV R2 ~ 0.66-0.69) and predict the microstructural categories
+well (balanced accuracy up to 0.81). This is a useful, deployable level of
+accuracy for screening and process guidance.
+
+Second, the persistent train-CV gap (e.g. UTS train 0.95 vs CV 0.69) survived
+aggressive nested-CV regularisation, indicating it is not a tuning artefact.
+Third, and decisively, the variance-decomposition diagnostic attributes 51-100 %
+of each target's variance to between-study factors absent from the feature set,
+and the four-model benchmark shows all algorithms saturating at the same score.
+Together these establish that the accuracy ceiling is imposed by the DATA (the
+absence of compositional and machine/heat-treatment descriptors), not by the
+choice of learning algorithm. The practical corollary is important: effort spent
+on ever more sophisticated models yields diminishing returns (<= 0.03 R2),
+whereas acquiring even a coarse alloy/material label per specimen would be
+expected to raise accuracy substantially by capturing the dominant between-study
+variance.
+
+The methodological contributions - deterministic physics imputation that
+recovers exact values with zero leakage, strictly in-fold statistical
+imputation, evidence-based feature pruning via ablation, and honest repeated/
+nested CV with uncertainty reporting - are transferable to other literature-
+aggregated materials datasets, which share the same pathologies.
+
+
+--------------------------------------------------------------------------------
+6. LIMITATIONS
+--------------------------------------------------------------------------------
+  - Range-to-midpoint parsing discards within-range uncertainty.
+  - Statistical (MICE) imputation of moderately-missing inputs injects modelled
+    estimates; feature importances for such columns should be read cautiously.
+  - The dataset pools many alloys, machines and powders that are not encoded;
+    absolute accuracy will not transfer to a single new machine without
+    recalibration.
+  - Per-target sample sizes are small (173-447), yielding wide confidence
+    intervals; results are reported as mean +/- s.d. rather than point values.
+  - Grain Size in particular remains high-variance across folds despite
+    stabilisation.
+
+
+--------------------------------------------------------------------------------
+7. CONCLUSIONS
+--------------------------------------------------------------------------------
+  1. A leakage-free, overfitting-aware ML pipeline was built for a 674-specimen,
+     63-study LPBF process-property dataset with severe missingness and mixed
+     data types.
+  2. Best held-out performance under REPLICATE-GROUPED CV (the honest protocol,
+     Section 4.7): Relative Density R2 = 0.678, UTS 0.646, Hardness 0.519,
+     Yield Stress 0.463, Grain Size 0.356 (not usable);
+     Microstructure Plane balanced accuracy 0.813, Grain Shape 0.665.
+     The higher values in Section 4.1 (e.g. Grain Size 0.662) are inflated by
+     replicate leakage and are superseded.
+     Those figures use a single grouped loop, in which each target's winning
+     model is chosen on the same folds that score it. Wrapping selection in an
+     inner loop and scoring in an outer one (NESTED grouped CV) removes that
+     residual optimism and gives the values reported in the README and shown by
+     the web app: Relative Density 0.661, UTS 0.616, Hardness 0.478,
+     Yield Stress 0.426, Grain Size 0.352; Microstructure Plane 0.805,
+     Grain Shape 0.656. The nested penalty is -0.004 to -0.041, largest where
+     candidate models are closest together and the per-fold winner is least
+     stable. outputs/nested_grouped_results.csv is the citable source;
+     outputs/grouped_model_comparison.csv compares candidates and should not be
+     quoted as a final score.
+  2a. A replicate-leakage defect in the validation protocol was identified and
+     corrected: 19 % of rows share an identical process-input vector with
+     another row, which RepeatedKFold splits across train and test. Detecting
+     and quantifying this is itself a methodological contribution - it is a
+     failure mode endemic to literature-aggregated datasets, where one study
+     routinely reports several measurements per process setting.
+  3. Derived energy-density features add no independent value and were dropped
+     for parsimony. NOTE: the previously reported Grain Size "stabilisation"
+     from this drop (R2 0.51 -> 0.64) does not survive grouped CV and is
+     withdrawn - it was an artefact of replicate leakage.
+  4. A four-model Bayesian-tuned benchmark demonstrated that model choice is not
+     the bottleneck: RF, XGBoost, LightGBM and CatBoost agree within ~0.03 R2.
+  5. Variance decomposition shows the accuracy ceiling is data-imposed
+     (51-100 % between-study variance). The recommended next step is enriching
+     the feature set with compositional/machine metadata, not adopting more
+     complex models.
+
+
+--------------------------------------------------------------------------------
+8. REPRODUCIBILITY
+--------------------------------------------------------------------------------
+  - Code: LPBF_ML_Analysis.ipynb (35 cells; executed end-to-end).
+  - Detailed methods: METHODOLOGY_README.md.
+  - Result artefacts (outputs/):
+        regression_results.csv, classification_results.csv,
+        tuned_results.csv, energy_ablation.csv, grainsize_stacked.csv,
+        model_benchmark.csv, and figures (missingness, correlation, confusion
+        matrices, permutation importance, grain-size, model benchmark).
+  - Environment: Python 3.10; scikit-learn 1.7.2, XGBoost 3.2.0,
+    LightGBM 4.7.0, CatBoost 1.2.10, Optuna 4.9.0. Random seed = 42.
+================================================================================

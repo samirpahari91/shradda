@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LPBF Property Predictor — Process→Property Machine Learning</title>
+<meta name="description" content="Predict laser powder-bed fusion part properties — hardness, strength, density, grain size and microstructure — from process parameters. Runs entirely in your browser." />
+<meta name="color-scheme" content="light dark" />
+<link rel="preload" href="model.json" as="fetch" crossorigin="anonymous" />
+<link rel="stylesheet" href="css/styles.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%99%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M12 2v6" /><path d="M12 8 7 21" /><path d="M12 8l5 13" />
+          <path d="M4 21h16" /><circle cx="12" cy="8" r="1.6" fill="currentColor" stroke="none" />
+        </svg>
+      </span>
+      <span class="brand-text">
+        <strong>LPBF Predictor</strong>
+        <small>Process → Property ML</small>
+      </span>
+    </div>
+
+    <nav class="header-actions" aria-label="Site actions">
+      <a class="ghost-btn" href="#model-card">Model card</a>
+      <button id="theme-toggle" class="icon-btn" type="button"
+              aria-label="Switch to dark theme" aria-live="polite">
+        <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" stroke-linecap="round" />
+        </svg>
+        <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+  <section class="hero">
+    <h1>Predict LPBF part properties from process parameters</h1>
+    <p class="lede">
+      Enter your laser powder-bed fusion process settings to estimate seven material
+      properties at once. Models were trained on
+      <strong id="hero-rows">674</strong> specimens compiled from
+      <strong>63 peer-reviewed publications</strong>, and run
+      <strong>entirely in your browser</strong> — no data leaves this page.
+    </p>
+    <div id="load-status" class="load-status" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Loading models…</span>
+    </div>
+  </section>
+
+  <div class="layout">
+
+    <!-- ============================ INPUT FORM ============================ -->
+    <section class="card form-card" aria-labelledby="form-heading">
+      <div class="card-head">
+        <h2 id="form-heading">Process parameters</h2>
+        <p class="card-sub">
+          Leave any field blank to use the dataset median — the models were trained to
+          handle missing inputs.
+        </p>
+      </div>
+
+      <form id="predict-form" novalidate>
+        <div id="fields" class="fields">
+          <!-- Skeleton placeholders, replaced once model.json loads -->
+          <div class="skeleton-field" aria-hidden="true"></div>
+          <div class="skeleton-field" aria-hidden="true"></div>
+          <div class="skeleton-field" aria-hidden="true"></div>
+          <div class="skeleton-field" aria-hidden="true"></div>
+          <div class="skeleton-field" aria-hidden="true"></div>
+          <div class="skeleton-field" aria-hidden="true"></div>
+        </div>
+
+        <div class="derived" id="derived-panel" hidden>
+          <h3 class="derived-title">
+            Derived features
+            <button type="button" class="info-btn" aria-label="About derived features"
+                    data-tip="Computed automatically from your inputs, exactly as during training. These physical ratios govern melt-pool overlap and penetration.">
+              ?
+            </button>
+          </h3>
+          <dl class="derived-grid" id="derived-grid"></dl>
+        </div>
+
+        <div id="form-error" class="form-error" role="alert" hidden></div>
+
+        <div class="actions">
+          <button type="submit" id="predict-btn" class="primary-btn">
+            <span class="btn-label">Predict properties</span>
+          </button>
+          <button type="button" id="sample-btn" class="secondary-btn">Sample data</button>
+          <button type="button" id="reset-btn" class="text-btn">Clear</button>
+        </div>
+        <p class="auto-note" id="auto-note">Predictions update automatically as you type.</p>
+      </form>
+    </section>
+
+    <!-- ============================= RESULTS ============================= -->
+    <section class="results-col" aria-labelledby="results-heading">
+      <div class="results-head">
+        <h2 id="results-heading">Predicted properties</h2>
+        <span id="results-badge" class="badge" hidden></span>
+      </div>
+
+      <!-- Screen-reader announcement channel -->
+      <p id="sr-results" class="visually-hidden" role="status" aria-live="polite"></p>
+
+      <div id="results" class="results-grid" aria-busy="false">
+        <div class="empty-state" id="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M4 19h16M6 19V9m5 10V5m5 14v-7" stroke-linecap="round" />
+          </svg>
+          <p>Enter parameters and press <strong>Predict properties</strong> to see all
+             seven predictions.</p>
+        </div>
+      </div>
+
+      <div id="sample-actual" class="sample-actual" hidden>
+        <h3>Measured values from this source study</h3>
+        <p class="sample-note">
+          The sampled row's reported values, for comparison. These rows were part of
+          training, so agreement here is <em>not</em> an out-of-sample test.
+        </p>
+        <dl id="sample-actual-grid" class="sample-grid"></dl>
+      </div>
+    </section>
+  </div>
+
+  <!-- =========================== MODEL CARD =========================== -->
+  <section id="model-card" class="card model-card" aria-labelledby="mc-heading">
+    <div class="card-head">
+      <h2 id="mc-heading">Model card &amp; honest performance</h2>
+      <p class="card-sub">
+        One model per property, each selected and scored under
+        <strong>replicate-grouped nested cross-validation</strong>.
+      </p>
+    </div>
+
+    <div class="table-scroll">
+      <table class="perf-table">
+        <caption class="visually-hidden">
+          Cross-validated performance of the deployed model for each target property
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Property</th>
+            <th scope="col">Model</th>
+            <th scope="col">Training rows</th>
+            <th scope="col">Held-out score</th>
+            <th scope="col">Typical error</th>
+          </tr>
+        </thead>
+        <tbody id="perf-body">
+          <tr><td colspan="5" class="muted">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="caveats">
+      <h3>How to read these numbers</h3>
+      <ul>
+        <li>
+          <strong>Scores are grouped-CV, not optimistic K-fold.</strong> Roughly 15–35 % of
+          dataset rows share an identical process-input vector with another row (one study
+          reporting several measurements for a single setting). Ordinary K-fold splits those
+          twins across train and test, which inflates scores — for grain size by more than
+          0.4 R². Every number here keeps replicates together.
+        </li>
+        <li>
+          <strong>The ceiling is the data, not the model.</strong> 51–100 % of each
+          property's variance is <em>between-study</em> — driven by alloy, machine, powder
+          and heat treatment, none of which are columns in this dataset. Adding a fancier
+          algorithm does not help; adding an alloy label would.
+        </li>
+        <li>
+          <strong>Use for screening, not qualification.</strong> Predictions are
+          alloy-agnostic averages over many materials and machines. Expect a real offset for
+          any single machine until you recalibrate.
+        </li>
+        <li>
+          <strong>Extrapolation is flagged.</strong> Inputs outside the training range get a
+          warning — tree ensembles cannot extrapolate and will silently clamp to their edge
+          prediction.
+        </li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>
+      LPBF process–property ML · trained with scikit-learn + XGBoost, served as static
+      JSON and evaluated in plain JavaScript.
+    </p>
+    <p class="footer-meta" id="footer-meta"></p>
+  </div>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

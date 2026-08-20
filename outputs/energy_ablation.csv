@@ -1,0 +1,6 @@
+target,R2_with_energy,R2_without_energy,deltaR2
+Hardness (HV),0.476,0.432,-0.044
+Yield Stress (MPa),0.699,0.685,-0.013
+Ultimate Tensile Strength (MPa),0.682,0.692,0.01
+Relative Density %,0.696,0.657,-0.04
+Microstructure Average Grain Size(µm),0.506,0.636,0.13

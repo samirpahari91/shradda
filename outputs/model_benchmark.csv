@@ -1,0 +1,17 @@
+target,model,tuned_CV_R2,std,delta_vs_XGB
+Ultimate Tensile Strength (MPa),RandomForest,0.71,0.099,0.032
+Ultimate Tensile Strength (MPa),XGBoost,0.705,0.112,0.027
+Ultimate Tensile Strength (MPa),LightGBM,0.703,0.119,0.025
+Ultimate Tensile Strength (MPa),CatBoost,0.7,0.104,0.022
+Yield Stress (MPa),RandomForest,0.654,0.088,-0.034
+Yield Stress (MPa),XGBoost,0.683,0.101,-0.005
+Yield Stress (MPa),LightGBM,0.688,0.105,0.001
+Yield Stress (MPa),CatBoost,0.676,0.097,-0.011
+Relative Density %,RandomForest,0.603,0.121,-0.073
+Relative Density %,XGBoost,0.684,0.078,0.009
+Relative Density %,LightGBM,0.546,0.094,-0.13
+Relative Density %,CatBoost,0.652,0.123,-0.023
+Hardness (HV),RandomForest,0.578,0.236,0.165
+Hardness (HV),XGBoost,0.579,0.17,0.167
+Hardness (HV),LightGBM,0.559,0.16,0.147
+Hardness (HV),CatBoost,0.552,0.221,0.14

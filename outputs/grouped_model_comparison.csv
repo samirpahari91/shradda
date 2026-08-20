@@ -1,0 +1,53 @@
+target,model,n,grouped_CV,std
+Hardness (HV),Dummy(median),173,-0.0415,0.0655
+Hardness (HV),RandomForest/d8,173,0.5098,0.1897
+Hardness (HV),RandomForest/d12,173,0.5181,0.2021
+Hardness (HV),RandomForest/deep,173,0.5191,0.2069
+Hardness (HV),ExtraTrees,173,0.4915,0.2418
+Hardness (HV),XGBoost/shallow,173,0.4969,0.1974
+Hardness (HV),XGBoost/mid,173,0.4959,0.1881
+Hardness (HV),XGBoost/reg,173,0.5094,0.1945
+Yield Stress (MPa),Dummy(median),249,-0.1105,0.1049
+Yield Stress (MPa),RandomForest/d8,249,0.3419,0.2598
+Yield Stress (MPa),RandomForest/d12,249,0.3815,0.301
+Yield Stress (MPa),RandomForest/deep,249,0.4143,0.2989
+Yield Stress (MPa),ExtraTrees,249,0.4628,0.2982
+Yield Stress (MPa),XGBoost/shallow,249,0.4118,0.3599
+Yield Stress (MPa),XGBoost/mid,249,0.4355,0.3283
+Yield Stress (MPa),XGBoost/reg,249,0.4196,0.3469
+Ultimate Tensile Strength (MPa),Dummy(median),291,-0.06,0.0731
+Ultimate Tensile Strength (MPa),RandomForest/d8,291,0.4979,0.1476
+Ultimate Tensile Strength (MPa),RandomForest/d12,291,0.5577,0.1785
+Ultimate Tensile Strength (MPa),RandomForest/deep,291,0.5813,0.1816
+Ultimate Tensile Strength (MPa),ExtraTrees,291,0.6464,0.1739
+Ultimate Tensile Strength (MPa),XGBoost/shallow,291,0.588,0.1904
+Ultimate Tensile Strength (MPa),XGBoost/mid,291,0.5923,0.2068
+Ultimate Tensile Strength (MPa),XGBoost/reg,291,0.62,0.1877
+Relative Density %,Dummy(median),447,-0.165,0.0666
+Relative Density %,RandomForest/d8,447,0.5268,0.0995
+Relative Density %,RandomForest/d12,447,0.5752,0.1229
+Relative Density %,RandomForest/deep,447,0.6068,0.128
+Relative Density %,ExtraTrees,447,0.6049,0.1592
+Relative Density %,XGBoost/shallow,447,0.6037,0.1478
+Relative Density %,XGBoost/mid,447,0.6743,0.1006
+Relative Density %,XGBoost/reg,447,0.6775,0.0998
+Microstructure Average Grain Size(µm),Dummy(median),202,-0.1095,0.059
+Microstructure Average Grain Size(µm),RandomForest/d8,202,0.1446,0.9062
+Microstructure Average Grain Size(µm),RandomForest/d12,202,0.2616,1.1743
+Microstructure Average Grain Size(µm),RandomForest/deep,202,0.1468,1.8302
+Microstructure Average Grain Size(µm),ExtraTrees,202,0.3556,1.7094
+Microstructure Average Grain Size(µm),XGBoost/shallow,202,-0.3726,4.856
+Microstructure Average Grain Size(µm),XGBoost/mid,202,-1.428,9.6547
+Microstructure Average Grain Size(µm),XGBoost/reg,202,0.0672,2.7943
+Grain Shape,Dummy(freq),311,0.1667,0.0
+Grain Shape,RandomForest/d8,311,0.6537,0.0731
+Grain Shape,RandomForest/deep,311,0.6385,0.0798
+Grain Shape,ExtraTrees,311,0.6645,0.0816
+Grain Shape,XGBoost/shallow,311,0.6136,0.0624
+Grain Shape,XGBoost/mid,311,0.6262,0.0703
+Microstructure_ Plane,Dummy(freq),315,0.5,0.0
+Microstructure_ Plane,RandomForest/d8,315,0.8129,0.0377
+Microstructure_ Plane,RandomForest/deep,315,0.7959,0.0346
+Microstructure_ Plane,ExtraTrees,315,0.8066,0.0352
+Microstructure_ Plane,XGBoost/shallow,315,0.8072,0.0357
+Microstructure_ Plane,XGBoost/mid,315,0.8111,0.0369
